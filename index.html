@@ -3,46 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XUHAO - Web Nghe Nhạc Firebase</title>
+    <title>XUHAO - Quản Lý & Phát Nhạc Firebase</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding-top: 40px; }
-        .box { background: #1e293b; max-width: 450px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 0 20px #38bdf8; }
-        input { padding: 12px; width: 80%; margin: 15px 0; border-radius: 8px; border: none; text-align: center; font-size: 16px; }
-        .btn-main { padding: 12px 25px; background: #38bdf8; color: #0f172a; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding: 15px; margin: 0; }
+        .box { background: #1e293b; max-width: 500px; margin: 15px auto; padding: 20px; border-radius: 15px; box-shadow: 0 0 15px #38bdf8; }
+        input, select { padding: 12px; width: 90%; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 15px; box-sizing: border-box; }
+        .btn-main { padding: 12px 20px; background: #38bdf8; color: #0f172a; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; margin: 10px 0; width: 90%; }
+        .btn-add { background: #22c55e; color: white; }
         .btn-token { display: inline-block; padding: 10px 20px; background: #e94560; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; }
-        #player { display: none; margin-top: 20px; }
+        #mainApp { display: none; }
+        .song-item { background: #334155; margin: 10px 0; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .song-info { flex-grow: 1; word-break: break-all; margin-right: 10px; }
+        .btn-del { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-play { background: #38bdf8; color: #0f172a; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-right: 5px; }
+        audio { width: 100%; margin-top: 15px; }
+        h3 { color: #38bdf8; margin-top: 15px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
     </style>
 
-    <!-- Kết nối thư viện Firebase CDN -->
+    <!-- Thư viện Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <!-- Màn hình khóa Token -->
+    <!-- 1. Màn hình khóa Token -->
     <div class="box" id="lockScreen">
         <h2>🔒 KHÓA BẢO MẬT XUHAO</h2>
-        <p>Vui lòng nhập mã Token để mở khóa trình phát nhạc:</p>
-        <input type="text" id="tokenInput" placeholder="Ví dụ: XUHAO-NAM-1234">
+        <p>Vui lòng nhập mã Token để truy cập:</p>
+        <input type="text" id="tokenInput" placeholder="Ví dụ: XUHAO-1234">
         <br>
-        <button class="btn-main" onclick="xacNhanToken()">Mở Khóa Nghe Nhạc</button>
+        <button class="btn-main" onclick="xacNhanToken()">Mở Khóa Hệ Thống</button>
         <hr style="border: 0.5px solid #334155; margin: 20px 0;">
         <p>Chưa có mã Token?</p>
         <a href="token.html" class="btn-token">🔑 Bấm vào đây để Lấy Mã Token</a>
     </div>
 
-    <!-- Màn hình phát nhạc từ Firebase -->
-    <div class="box" id="player">
-        <h2>🎉 KẾT NỐI MÁY CHỦ THÀNH CÔNG!</h2>
-        <p id="songTitle">Đang lấy dữ liệu bài hát từ Firebase...</p>
-        
-        <audio controls id="myAudio" style="width: 100%; margin-top: 15px;">
-            Trình duyệt không hỗ trợ phát nhạc!
-        </audio>
+    <!-- 2. Giao diện chính sau khi mở khóa Token -->
+    <div id="mainApp">
+        <!-- Khung Trình Chọn & Phát Nhạc -->
+        <div class="box">
+            <h2>🎵 TRÌNH PHÁT & CHỌN NHẠC</h2>
+            
+            <p style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">--- TRÌNH CHỌN BÀI HÁT ---</p>
+            <select id="songSelect" onchange="chonVaPhatFromSelect()">
+                <option value="">-- Đang tải danh sách bài hát... --</option>
+            </select>
+
+            <p id="currentPlaying" style="color: #38bdf8; font-weight: bold; margin-top: 15px;">Chưa chọn bài hát nào</p>
+            <audio controls id="myAudio"></audio>
+        </div>
+
+        <!-- Khung Trình Thêm Nhạc Mới -->
+        <div class="box">
+            <h3>➕ TRÌNH THÊM NHẠC MỚI</h3>
+            <input type="text" id="newSongName" placeholder="Nhập tên bài hát...">
+            <input type="text" id="newSongUrl" placeholder="Dán link nhạc (URL / Firebase Storage)...">
+            <button class="btn-main btn-add" onclick="themBaiHat()">Thêm Vào Máy Chủ Firebase</button>
+        </div>
+
+        <!-- Khung Trình Danh Sách & Xóa Nhạc Lỗi -->
+        <div class="box">
+            <h3>📋 DANH SÁCH & TRÌNH XÓA NHẠC LỖI</h3>
+            <div id="songList">Đang kết nối máy chủ lấy danh sách nhạc...</div>
+        </div>
     </div>
 
     <script>
-        // Cấu hình Firebase API của ông
+        // Cấu hình Firebase nhaccuahongdang
         const firebaseConfig = {
           apiKey: "AIzaSyD5W9wtr6khkvZLkDQpDaPkDq1bUZgXgMw",
           authDomain: "nhaccuahongdang.firebaseapp.com",
@@ -53,35 +80,115 @@
           measurementId: "G-KY5TJFD03T"
         };
 
-        // Khởi tạo Firebase Firestore
+        // Khởi tạo Firestore
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Kiểm tra Token
         function xacNhanToken() {
             let input = document.getElementById('tokenInput').value.trim();
-            
             if (input.startsWith("XUHAO-")) {
-                alert("Mã Token hợp lệ! Đang kéo nhạc từ máy chủ nhaccuahongdang...");
                 document.getElementById('lockScreen').style.display = "none";
-                document.getElementById('player').style.display = "block";
-
-                // Tự động kéo link nhạc từ collection playlist trên Firestore của ông
-                db.collection("playlist").get().then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        let data = doc.data();
-                        if (data.songUrl) {
-                            let audio = document.getElementById("myAudio");
-                            audio.src = data.songUrl;
-                            document.getElementById("songTitle").innerText = "Bài hát: " + (data.songName || "Đang phát từ Firebase");
-                            audio.play();
-                        }
-                    });
-                }).catch((error) => {
-                    alert("Lỗi kết nối máy chủ: " + error.message);
-                });
-
+                document.getElementById('mainApp').style.display = "block";
+                taiDanhSachNhac();
             } else {
-                alert("❌ Mã Token không đúng! Vui lòng bấm nút bên dưới để lấy mã!");
+                alert("❌ Mã Token không đúng! Vui lòng kiểm tra lại.");
+            }
+        }
+
+        // Tự động đồng bộ danh sách nhạc vào Menu chọn bài và Danh sách xóa
+        function taiDanhSachNhac() {
+            db.collection("playlist").onSnapshot((snapshot) => {
+                let listHtml = "";
+                let selectHtml = '<option value="">-- Bấm vào đây để chọn bài hát --</option>';
+
+                if (snapshot.empty) {
+                    listHtml = "<p>Chưa có bài hát nào trên máy chủ.</p>";
+                    selectHtml = '<option value="">-- Không có bài hát nào --</option>';
+                } else {
+                    snapshot.forEach((doc) => {
+                        let song = doc.data();
+                        let songId = doc.id;
+                        let songName = song.songName || "Bài hát không tên";
+                        let songUrl = song.songUrl || "";
+
+                        // Đưa vào trình chọn nhạc
+                        selectHtml += `<option value="${songUrl}">${songName}</option>`;
+
+                        // Đưa vào danh sách nghe / xóa bên dưới
+                        listHtml += `
+                            <div class="song-item">
+                                <div class="song-info">
+                                    <strong>${songName}</strong>
+                                </div>
+                                <button class="btn-play" onclick="phatNhac('${songUrl}', '${songName}')">▶ Phát</button>
+                                <button class="btn-del" onclick="xoaBaiHat('${songId}', '${songName}')">🗑 Xóa</button>
+                            </div>
+                        `;
+                    });
+                }
+
+                document.getElementById("songSelect").innerHTML = selectHtml;
+                document.getElementById("songList").innerHTML = listHtml;
+            }, (error) => {
+                document.getElementById("songList").innerHTML = "<p style='color:red;'>Lỗi tải máy chủ: " + error.message + "</p>";
+            });
+        }
+
+        // Trình chọn nhạc từ Menu
+        function chonVaPhatFromSelect() {
+            let select = document.getElementById("songSelect");
+            let url = select.value;
+            let name = select.options[select.selectedIndex].text;
+
+            if (url) {
+                phatNhac(url, name);
+            }
+        }
+
+        // Hàm phát nhạc
+        function phatNhac(url, name) {
+            if (!url) {
+                alert("Bài hát này bị hỏng link!");
+                return;
+            }
+            let audio = document.getElementById("myAudio");
+            audio.src = url;
+            document.getElementById("currentPlaying").innerText = "Đang phát: " + name;
+            audio.play();
+        }
+
+        // Trình thêm nhạc
+        function themBaiHat() {
+            let name = document.getElementById("newSongName").value.trim();
+            let url = document.getElementById("newSongUrl").value.trim();
+
+            if (!name || !url) {
+                alert("Vui lòng nhập đủ Tên bài hát và Link nhạc!");
+                return;
+            }
+
+            db.collection("playlist").add({
+                songName: name,
+                songUrl: url,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("✅ Đã thêm bài hát thành công!");
+                document.getElementById("newSongName").value = "";
+                document.getElementById("newSongUrl").value = "";
+            }).catch((err) => {
+                alert("Lỗi khi thêm nhạc: " + err.message);
+            });
+        }
+
+        // Trình xóa nhạc bị lỗi
+        function xoaBaiHat(id, name) {
+            if (confirm("Ông có chắc muốn xóa bài '" + name + "' khỏi máy chủ không?")) {
+                db.collection("playlist").doc(id).delete().then(() => {
+                    alert("🗑️ Đã xóa bài hát thành công!");
+                }).catch((err) => {
+                    alert("Lỗi khi xóa: " + err.message);
+                });
             }
         }
     </script>
