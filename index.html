@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>XUHAO - Web Nghe Nhạc VIP</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding-top: 40px; }
+        .box { background: #1e293b; max-width: 450px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 0 20px #38bdf8; }
+        input { padding: 12px; width: 80%; margin: 15px 0; border-radius: 8px; border: none; text-align: center; font-size: 16px; }
+        .btn-main { padding: 12px 25px; background: #38bdf8; color: #0f172a; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px; }
+        
+        /* Trang trí nút bấm chuyển sang trang lấy Token */
+        .btn-token { display: inline-block; padding: 10px 20px; background: #e94560; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; }
+        .btn-token:hover { background: #ff6b81; }
+        #player { display: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Màn hình khóa nhập Token -->
+    <div class="box" id="lockScreen">
+        <h2>🔒 KHÓA BẢO MẬT XUHAO</h2>
+        <p>Vui lòng nhập mã Token để mở khóa trình phát nhạc:</p>
+        <input type="text" id="tokenInput" placeholder="Ví dụ: XUHAO-NAM-1234">
+        <br>
+        <button class="btn-main" onclick="xacNhanToken()">Mở Khóa Nghe Nhạc</button>
+
+        <hr style="border: 0.5px solid #334155; margin: 20px 0;">
+
+        <!-- NÚT BẤM CHUYỂN SANG TRANG TẠO TOKEN -->
+        <p>Chưa có mã Token?</p>
+        <a href="token.html" class="btn-token">🔑 Bấm vào đây để Lấy Mã Token</a>
+    </div>
+
+    <!-- Trình phát nhạc (Chỉ hiện khi nhập đúng mã Token) -->
+    <div class="box" id="player">
+        <h2>🎉 XIN CHÀO BẠN VÀO WEB XUHAO!</h2>
+        <p>Mã Token hợp lệ! Chúc ông nghe nhạc vui vẻ:</p>
+        
+        <audio controls id="myAudio" style="width: 100%; margin-top: 15px;">
+            <source src="ten_bai_nhac.mp3" type="audio/mpeg">
+            Trình duyệt không hỗ trợ phát nhạc!
+        </audio>
+    </div>
+
+    <script>
+        function xacNhanToken() {
+            let input = document.getElementById('tokenInput').value.trim();
+            
+            if (input.startsWith("XUHAO-")) {
+                alert("Mã Token chính xác! Đang mở khóa nhạc...");
+                document.getElementById('lockScreen').style.display = "none";
+                document.getElementById('player').style.display = "block";
+                document.getElementById('myAudio').play();
+            } else {
+                alert("❌ Mã Token không đúng! Vui lòng bấm nút bên dưới để lấy mã!");
+            }
+        }
+    </script>
+</body>
+</html>
