@@ -1,43 +1,80 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>XUHAO - Cấp Mã Token</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #1a1a2e; color: white; text-align: center; padding-top: 50px; }
-        .card { background: #16213e; max-width: 400px; margin: auto; padding: 20px; border-radius: 15px; box-shadow: 0 0 15px #0f3460; }
-        input { padding: 10px; width: 80%; margin: 10px 0; border-radius: 5px; border: none; text-align: center; }
-        button { padding: 10px 20px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .token-box { background: #0f3460; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 20px; color: #4eefc5; word-break: break-all; }
-    </style>
+  <meta charset="UTF-8">
+  <title>XUHAO - Cấp Mã Token</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: white; text-align: center; padding-top: 50px; margin: 0; }
+    .card { background: #16213e; max-width: 400px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 0 15px #0f3460; }
+    input { padding: 12px; width: 85%; margin: 10px 0; border-radius: 6px; border: none; text-align: center; font-size: 15px; background: #0f3460; color: #fff; }
+    button { padding: 12px 24px; background: #e94560; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 90%; margin-top: 10px; }
+    button:hover { opacity: 0.9; }
+    .token-box { background: #0f3460; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 20px; color: #4eefc5; word-break: break-all; font-weight: bold; }
+    .btn-go { background: #00b4d8; display: block; text-decoration: none; color: white; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 15px; }
+  </style>
+
+  <!-- Thư viện Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <div class="card">
-        <h2>🔑 HỆ THỐNG CẤP TOKEN XUHAO</h2>
-        <p>Nhập tên của ông để tạo Token nghe nhạc:</p>
-        <input type="text" id="username" placeholder="Nhập tên của ông...">
-        <br>
-        <button onclick="taoToken()">Tạo Mã Token</button>
 
-        <div id="result" style="display:none;">
-            <p>Mã Token bí mật của ông là:</p>
-            <div class="token-box" id="tokenDisplay"></div>
-            <p><small>Hãy copy mã này và nhập vào Trang Nghe Nhạc nhé!</small></p>
-        </div>
+  <div class="card">
+    <h2>🔑 HỆ THỐNG CẤP TOKEN XUHAO</h2>
+    <p>Nhập tên của ông để tạo Token nghe nhạc:</p>
+    <input type="text" id="username" placeholder="Nhập tên của ông...">
+    <br>
+    <button id="btnTao" onclick="taoToken()">✨ Tạo Mã Token</button>
+
+    <div id="result" style="display:none;">
+      <p style="margin-top: 15px; color: #aaa;">Mã Token bí mật của ông là:</p>
+      <div class="token-box" id="tokenDisplay"></div>
+      <p><small style="color: #4eefc5;">✅ Đã lưu Token thành công lên máy chủ Firebase!</small></p>
+      
+      <!-- Nút chuyển sang trang nghe nhạc -->
+      <a href="index.html" class="btn-go">🚀 Đến Trang Nghe Nhạc Ngay</a>
     </div>
+  </div>
 
-    <script>
-        function taoToken() {
-            let name = document.getElementById('username').value;
-            if(!name) { alert("Ông chưa nhập tên kìa!"); return; }
-            
-            // Tạo mã ngẫu nhiên dạng: XUHAO-NgoaiDoi-1234
-            let randomNum = Math.floor(1000 + Math.random() * 9000);
-            let token = "XUHAO-" + name.toUpperCase() + "-" + randomNum;
+  <script>
+    // Cấu hình Firebase
+    const firebaseConfig = {
+      measurementId: "G-KYSTJFD03T"
+    };
 
-            document.getElementById('tokenDisplay').innerText = token;
-            document.getElementById('result').style.display = "block";
-        }
-    </script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function taoToken() {
+      let name = document.getElementById('username').value.trim();
+      if(!name) { alert("Ông chưa nhập tên kìa!"); return; }
+
+      let btn = document.getElementById('btnTao');
+      btn.innerText = "⏳ Đang kết nối Firebase...";
+      btn.disabled = true;
+
+      // Tạo mã dạng: XUHAO-TEN-1234
+      let randomNum = Math.floor(1000 + Math.random() * 9000);
+      let cleanName = name.replace(/\s+/g, '').toUpperCase();
+      let token = "XUHAO-" + cleanName + "-" + randomNum;
+
+      try {
+        // LƯU TOKEN VÀO CƠ SỞ DỮ LIỆU FIREBASE
+        await db.collection("tokens").doc(token).set({
+          username: name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('tokenDisplay').innerText = token;
+        document.getElementById('result').style.display = "block";
+        btn.innerText = "✨ Tạo Mã Token Mới";
+        btn.disabled = false;
+      } catch(err) {
+        alert("Lỗi lưu Token: " + err.message);
+        btn.innerText = "✨ Tạo Mã Token";
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
