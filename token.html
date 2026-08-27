@@ -13,7 +13,7 @@
     .btn-go { background: #00b4d8; display: block; text-decoration: none; color: white; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 15px; }
   </style>
 
-  <!-- Firebase CDN -->
+  <!-- Thư viện Firebase CDN Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
@@ -31,14 +31,20 @@
       <div class="token-box" id="tokenDisplay"></div>
       <p><small style="color: #4eefc5;">✅ Đã lưu Token thành công lên máy chủ Firebase!</small></p>
       
-      <!-- Nút chuyển về lại index.html -->
       <a href="index.html" class="btn-go">🚀 Quay Lại Trang Nghe Nhạc</a>
     </div>
   </div>
 
   <script>
+    // Cấu hình Firebase chuẩn dự án nhaccuahongdang
     const firebaseConfig = {
-      measurementId: "G-KYSTJFD03T"
+      apiKey: "AIzaSyD5W9wtr6khkvZLkDQpDaPkDq1bUZgXgMw",
+      authDomain: "nhaccuahongdang.firebaseapp.com",
+      projectId: "nhaccuahongdang",
+      storageBucket: "nhaccuahongdang.firebasestorage.app",
+      messagingSenderId: "713163379824",
+      appId: "1:713163379824:web:edea7ed0847d99932b10b5",
+      measurementId: "G-KY5TJFD03T"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -49,7 +55,7 @@
       if(!name) { alert("Ông chưa nhập tên kìa!"); return; }
 
       let btn = document.getElementById('btnTao');
-      btn.innerText = "⏳ Đang kết nối Firebase...";
+      btn.innerText = "⏳ Đang lưu Token lên Firebase...";
       btn.disabled = true;
 
       let randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -57,6 +63,7 @@
       let token = "XUHAO-" + cleanName + "-" + randomNum;
 
       try {
+        // Lưu token vào Firestore collection "tokens"
         await db.collection("tokens").doc(token).set({
           username: name,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -67,7 +74,7 @@
         btn.innerText = "✨ Tạo Mã Token Mới";
         btn.disabled = false;
       } catch(err) {
-        alert("Lỗi lưu Token: " + err.message);
+        alert("Lỗi lưu Token lên Firebase: " + err.message);
         btn.innerText = "✨ Tạo Mã Token";
         btn.disabled = false;
       }
