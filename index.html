@@ -9,20 +9,7 @@
     input, select, button { margin: 5px 0; padding: 10px; width: 100%; box-sizing: border-box; border-radius: 6px; border: none; font-size: 14px; }
     input { background: #334155; color: #fff; }
     button { background: #38bdf8; color: #0f172a; font-weight: bold; cursor: pointer; }
-    
-    /* Nút dạng link chuyển sang trang token.html */
-    .btn-goto-token { 
-      display: block; 
-      background: #10b981; 
-      color: #fff; 
-      text-align: center; 
-      text-decoration: none; 
-      padding: 10px; 
-      border-radius: 6px; 
-      font-weight: bold; 
-      margin-top: 8px; 
-    }
-    
+    .btn-goto-token { display: block; background: #10b981; color: #fff; text-align: center; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 8px; }
     .btn-danger { background: #ef4444; color: #fff; width: auto; padding: 5px 10px; }
     .btn-play { background: #38bdf8; color: #0f172a; width: auto; padding: 5px 10px; margin-right: 5px; }
     audio { width: 100%; margin-top: 10px; }
@@ -30,25 +17,22 @@
     .hidden { display: none; }
   </style>
 
-  <!-- Firebase CDN -->
+  <!-- Thư viện Firebase CDN Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- 1. MÀN HÌNH KHÓA -->
+  <!-- MÀN HÌNH KHÓA -->
   <div id="lockScreen" class="box">
     <h2>🔑 KHÓA BẢO MẬT XUHAO</h2>
     <input type="text" id="tokenInput" placeholder="Dán mã Token tạo từ token.html vào đây...">
     <button onclick="xacNhanToken()">Mở Khóa Ngay</button>
-    
-    <!-- NÚT BẤM DẪN SANG TRANG TOKEN.HTML -->
     <a href="token.html" class="btn-goto-token">✨ Chưa có Token? Bấm để đến trang lấy Token</a>
-
     <p id="tokenStatus" style="color: #ef4444; margin-top: 10px; font-size: 13px;"></p>
   </div>
 
-  <!-- 2. GIAO DIỆN CHÍNH (Chỉ mở khi có Token hợp lệ) -->
+  <!-- GIAO DIỆN CHÍNH -->
   <div id="mainApp" class="hidden">
     
     <!-- TRÌNH PHÁT NHẠC -->
@@ -58,7 +42,7 @@
       <audio controls id="myAudio"></audio>
     </div>
 
-    <!-- TRÌNH THÊM NHẠC BẰNG LINK MP3 CÔNG KHAI -->
+    <!-- TRÌNH THÊM NHẠC MỚI -->
     <div class="box">
       <h3>➕ TRÌNH THÊM NHẠC MỚI</h3>
       <input type="text" id="newSongName" placeholder="Nhập tên bài hát...">
@@ -82,24 +66,31 @@
   </div>
 
   <script>
+    // Cấu hình Firebase kết nối trực tiếp đến dự án nhaccuahongdang
     const firebaseConfig = {
-      measurementId: "G-KYSTJFD03T"
+      apiKey: "AIzaSyD5W9wtr6khkvZLkDQpDaPkDq1bUZgXgMw",
+      authDomain: "nhaccuahongdang.firebaseapp.com",
+      projectId: "nhaccuahongdang",
+      storageBucket: "nhaccuahongdang.firebasestorage.app",
+      messagingSenderId: "713163379824",
+      appId: "1:713163379824:web:edea7ed0847d99932b10b5",
+      measurementId: "G-KY5TJFD03T"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Xác thực mã Token lưu từ token.html
+    // 1. Kiểm tra Token trên Firestore
     async function xacNhanToken() {
       const inputToken = document.getElementById("tokenInput").value.trim();
       const status = document.getElementById("tokenStatus");
 
       if (!inputToken) {
-        status.innerText = "Vui lòng dán mã Token hoặc bấm nút phía trên để tạo Token!";
+        status.innerText = "Vui lòng nhập mã Token hoặc bấm nút để sang token.html tạo mã!";
         return;
       }
 
-      status.innerText = "Đang kiểm tra trên máy chủ Firebase...";
+      status.innerText = "Đang kiểm tra dữ liệu trên Firebase...";
 
       try {
         const doc = await db.collection("tokens").doc(inputToken).get();
@@ -109,14 +100,14 @@
           document.getElementById("mainApp").classList.remove("hidden");
           taiDanhSachNhac();
         } else {
-          status.innerText = "Mã Token này chưa được tạo ở trang token.html!";
+          status.innerText = "Mã Token này chưa từng được khởi tạo ở trang token.html!";
         }
       } catch (err) {
-        status.innerText = "Lỗi kết nối: " + err.message;
+        status.innerText = "Lỗi kết nối Firebase: " + err.message;
       }
     }
 
-    // Thêm nhạc mới bằng URL
+    // 2. Thêm bài hát
     function themBaiHat() {
       const name = document.getElementById("newSongName").value.trim();
       const url = document.getElementById("newSongUrl").value.trim();
@@ -131,7 +122,7 @@
         songUrl: url,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
-        alert("✅ Đã thêm bài hát thành công!");
+        alert("✅ Đã thêm bài hát thành công vào Firestore!");
         document.getElementById("newSongName").value = "";
         document.getElementById("newSongUrl").value = "";
       }).catch((err) => {
@@ -139,7 +130,7 @@
       });
     }
 
-    // Tải danh sách & chọn bài hát
+    // 3. Tải danh sách bài hát
     function taiDanhSachNhac() {
       db.collection("playlist").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
         let selectHtml = '<option value="">-- Bấm vào đây để chọn bài hát --</option>';
