@@ -2,83 +2,98 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>XUHAO - Cấp Mã Token</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Token Truy Cập</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #1a1a2e; color: white; text-align: center; padding-top: 50px; margin: 0; }
-    .card { background: #16213e; max-width: 400px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 0 15px #0f3460; }
-    input { padding: 12px; width: 85%; margin: 10px 0; border-radius: 6px; border: none; text-align: center; font-size: 15px; background: #0f3460; color: #fff; }
-    button { padding: 12px 24px; background: #e94560; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; width: 90%; margin-top: 10px; }
-    button:hover { opacity: 0.9; }
-    .token-box { background: #0f3460; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 20px; color: #4eefc5; word-break: break-all; font-weight: bold; }
-    .btn-go { background: #00b4d8; display: block; text-decoration: none; color: white; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 15px; }
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    h2 { color: #a855f7; margin-top: 0; }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #fff;
+      box-sizing: border-box;
+      text-align: center;
+      font-size: 15px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      color: white;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .token-preview {
+      color: #38bdf8;
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 14px;
+      word-break: break-all;
+    }
   </style>
-
-  <!-- Thư viện Firebase CDN Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <div class="card">
-    <h2>🔑 HỆ THỐNG CẤP TOKEN XUHAO</h2>
-    <p>Nhập tên của ông để tạo Token nghe nhạc:</p>
-    <input type="text" id="username" placeholder="Nhập tên của ông...">
-    <br>
-    <button id="btnTao" onclick="taoToken()">✨ Tạo Mã Token</button>
+<div class="card">
+  <h2>🔐 TẠO TOKEN TRUY CẬP</h2>
+  <p style="color: #94a3b8; font-size: 13px;">Nhập tên của ông để hệ thống cấp mã Token dạng:<br><b style="color: #38bdf8;">xuhao-[Tên]-[MãSốBíMật]</b></p>
+  
+  <input type="text" id="username" placeholder="Nhập tên của ông...">
+  
+  <button id="btn-create">🔑 TẠO TOKEN & CHUI VÀO NGHE NHẠC</button>
+  
+  <div id="token-result" class="token-preview"></div>
+</div>
 
-    <div id="result" style="display:none;">
-      <p style="margin-top: 15px; color: #aaa;">Mã Token bí mật của ông là:</p>
-      <div class="token-box" id="tokenDisplay"></div>
-      <p><small style="color: #4eefc5;">✅ Đã lưu Token thành công lên máy chủ Firebase!</small></p>
-      
-      <a href="index.html" class="btn-go">🚀 Quay Lại Trang Nghe Nhạc</a>
-    </div>
-  </div>
-
-  <script>
-    // Cấu hình Firebase chuẩn dự án nhaccuahongdang
-    const firebaseConfig = {
-      apiKey: "AIzaSyD5W9wtr6khkvZLkDQpDaPkDq1bUZgXgMw",
-      authDomain: "nhaccuahongdang.firebaseapp.com",
-      projectId: "nhaccuahongdang",
-      storageBucket: "nhaccuahongdang.firebasestorage.app",
-      messagingSenderId: "713163379824",
-      appId: "1:713163379824:web:edea7ed0847d99932b10b5",
-      measurementId: "G-KY5TJFD03T"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    async function taoToken() {
-      let name = document.getElementById('username').value.trim();
-      if(!name) { alert("Ông chưa nhập tên kìa!"); return; }
-
-      let btn = document.getElementById('btnTao');
-      btn.innerText = "⏳ Đang lưu Token lên Firebase...";
-      btn.disabled = true;
-
-      let randomNum = Math.floor(1000 + Math.random() * 9000);
-      let cleanName = name.replace(/\s+/g, '').toUpperCase();
-      let token = "XUHAO-" + cleanName + "-" + randomNum;
-
-      try {
-        // Lưu token vào Firestore collection "tokens"
-        await db.collection("tokens").doc(token).set({
-          username: name,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        document.getElementById('tokenDisplay').innerText = token;
-        document.getElementById('result').style.display = "block";
-        btn.innerText = "✨ Tạo Mã Token Mới";
-        btn.disabled = false;
-      } catch(err) {
-        alert("Lỗi lưu Token lên Firebase: " + err.message);
-        btn.innerText = "✨ Tạo Mã Token";
-        btn.disabled = false;
-      }
+<script>
+  document.getElementById('btn-create').addEventListener('click', function() {
+    const nameInput = document.getElementById('username').value.trim();
+    
+    if (!nameInput) {
+      alert("Ông vui lòng nhập tên vào nhé!");
+      return;
     }
-  </script>
+
+    const cleanName = nameInput.replace(/\s+/g, '');
+    const secretNum = Math.floor(100000 + Math.random() * 900000);
+    
+    // Đã đổi thành xuhao-
+    const token = `xuhao-${cleanName}-${secretNum}`;
+
+    localStorage.setItem('xuhao_access_token', token);
+    
+    document.getElementById('token-result').innerText = "Đã cấp Token: " + token;
+
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 400);
+  });
+</script>
+
 </body>
 </html>
