@@ -61,17 +61,34 @@
 
 <div class="card">
   <h2>🔐 TẠO TOKEN TRUY CẬP</h2>
-  <p style="color: #94a3b8; font-size: 13px;">Nhập tên của ông để hệ thống cấp mã Token dạng:<br><b style="color: #38bdf8;">xuhao-[Tên]-[MãSốBíMật]</b></p>
+  <p style="color: #94a3b8; font-size: 13px;">Nhập tên của ông để hệ thống cấp và lưu Token lên Firebase:<br><b style="color: #38bdf8;">xuhao-[Tên]-[MãSốBíMật]</b></p>
   
   <input type="text" id="username" placeholder="Nhập tên của ông...">
   
-  <button id="btn-create">🔑 TẠO TOKEN & CHUI VÀO NGHE NHẠC</button>
+  <button id="btn-create">🔑 TẠO TOKEN & ĐỒNG BỘ FIREBASE</button>
   
   <div id="token-result" class="token-preview"></div>
 </div>
 
-<script>
-  document.getElementById('btn-create').addEventListener('click', function() {
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+  // Kết nối chìa khóa Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyD5W9wtr6khkvZLkDQpDaPkDq1bUZgXgMw",
+    authDomain: "nhaccuahongdang.firebaseapp.com",
+    projectId: "nhaccuahongdang",
+    storageBucket: "nhaccuahongdang.firebasestorage.app",
+    messagingSenderId: "713163379824",
+    appId: "1:713163379824:web:edea7ed0847d99932b10b5",
+    measurementId: "G-KY5TJFD03T"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  document.getElementById('btn-create').addEventListener('click', async function() {
     const nameInput = document.getElementById('username').value.trim();
     
     if (!nameInput) {
@@ -79,21 +96,40 @@
       return;
     }
 
+    const btn = document.getElementById('btn-create');
+    btn.innerText = "⏳ Đang lưu Token lên Firebase...";
+    btn.disabled = true;
+
     const cleanName = nameInput.replace(/\s+/g, '');
     const secretNum = Math.floor(100000 + Math.random() * 900000);
-    
-    // Đã đổi thành xuhao-
     const token = `xuhao-${cleanName}-${secretNum}`;
 
-    localStorage.setItem('xuhao_access_token', token);
-    
-    document.getElementById('token-result').innerText = "Đã cấp Token: " + token;
+    try {
+      // 1. ĐẨY TOKEN TRỰC TIẾP LÊN MÁY CHỦ FIREBASE (Collection: "tokens")
+      await addDoc(collection(db, "tokens"), {
+        token_key: token,
+        created_by: cleanName,
+        created_at: new Date().toISOString()
+      });
 
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 400);
+      // 2. Lưu lại vào bộ nhớ máy hiện tại
+      localStorage.setItem('xuhao_access_token', token);
+      
+      document.getElementById('token-result').innerText = "✅ Đã đồng bộ Firebase: " + token;
+
+      // 3. Chuyển sang trang nhạc
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 600);
+
+    } catch (err) {
+      alert("Lỗi kết nối Firebase: " + err.message);
+      btn.innerText = "🔑 TẠO TOKEN & ĐỒNG BỘ FIREBASE";
+      btn.disabled = false;
+    }
   });
 </script>
 
 </body>
 </html>
+
